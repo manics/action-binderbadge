@@ -9,7 +9,7 @@ async function run(): Promise<void> {
     const payload = JSON.stringify(github.context.payload, undefined, 2)
     core.debug(`Event payload: ${payload}`)
 
-    if (github.context.eventName !== 'pull_request') {
+    if (!github.context.eventName.startsWith('pull_request')) {
       core.setFailed(`Event not supported: ${github.context.eventName}`)
       return
     }
