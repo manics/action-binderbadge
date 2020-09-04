@@ -1,101 +1,71 @@
-<p align="center">
-  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
-</p>
+# BinderHub badge GitHub Action
+[![build-test](https://github.com/manics/action-binderbadge/workflows/build-test/badge.svg)](https://github.com/manics/action-binderbadge/actions)
 
-# Create a JavaScript Action using TypeScript
+Automatically comment on GitHub pull requests with a link to launch the PR on https://mybinder.org or some other [Binderhub](https://github.com/jupyterhub/binderhub).
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+If the action has already commented on a PR and further changes are made the comment will be updated to avoid excessive notifications of new comments.
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
+## Required input parameters
 
-## Create an action from this template
+- `githubToken`: The GitHub token, required so this action can comment on pull requests.
 
-Click the `Use this Template` and provide the new repo details for your action
 
-## Code in Main
+## Optional input parameters
 
-Install the dependencies  
+- `binderUrl`: Optionally specify an alternative BinderHub instead of mybinder.org.
+The URL `<binderUrl>/badge_logo.svg` must exist, and will be used as the badge for linking.
+
+
+## Example
+
+```yaml
+name: binder-badge
+on:
+  pull_request_target:
+
+jobs:
+  badge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: manics/action-binderbadge@main
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+```
+
+
+## Developer notes
+
+Install the dependencies:
 ```bash
 $ npm install
 ```
 
-Build the typescript and package it for distribution
+Build the typescript, run the formatter and linter:
 ```bash
-$ npm run build && npm run package
+$ npm run build && npm run format && npm run lint
 ```
 
-Run the tests :heavy_check_mark:  
-```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
-```
-
-## Change action.yml
-
-The action.yml contains defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
+Package the code for distribution (uses [ncc](https://github.com/zeit/ncc)):
 ```bash
 $ npm run package
+```
+
+Run the tests :heavy_check_mark:
+```bash
+$ npm test
+```
+The tests use [nock](https://github.com/nock/nock) to mock GitHub API responses, no real requests are made so manual testing is still required.
+
+Shortcut:
+```bash
+$ npm run all
+```
+
+Actions are run from GitHub repos so you must checkin the packed `dist` folder:
+```bash
+$ npm run all
 $ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
+$ git commit
+$ git push origin main
 ```
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
-
-```yaml
-uses: ./
-with:
-  milliseconds: 1000
-```
-
-See the [actions tab](https://github.com/actions/typescript-action/actions) for runs of this action! :rocket:
-
-## Usage:
-
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
