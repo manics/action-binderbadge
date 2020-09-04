@@ -1,0 +1,13 @@
+name: 'binder-badge'
+on:
+  pull_request:
+  # pull_request_target:
+
+jobs:
+  badge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

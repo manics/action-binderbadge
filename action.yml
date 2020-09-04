@@ -1,11 +1,10 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: mybinder-badge-commenter
+description: Add a mybinder link comment on PRs
+author: Simon Li
 inputs:
-  milliseconds: # change this
+  githubToken:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: GitHub token
 runs:
   using: 'node12'
   main: 'dist/index.js'

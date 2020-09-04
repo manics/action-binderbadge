@@ -38,19 +38,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
-const wait_1 = __webpack_require__(817);
+const commentText = ':point_left: Launch a binder notebook on this branch for commit';
+const commentUpdate = 'I will automatically update this comment whenever this PR is modified';
+// Set secret `ACTIONS_RUNNER_DEBUG=true` to enable debug comments
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const payload = JSON.stringify(github.context.payload, undefined, 2);
-            core.info(`The event payload: ${payload}`);
-            // github.context.issue.number
-            const ms = core.getInput('milliseconds');
-            core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
-            core.debug(new Date().toTimeString());
-            yield wait_1.wait(parseInt(ms, 10));
-            core.debug(new Date().toTimeString());
-            core.setOutput('time', new Date().toTimeString());
+            core.debug(`Event payload: ${payload}`);
+            if (github.context.eventName !== 'pull_request') {
+                core.setFailed(`Event not supported: ${github.context.eventName}`);
+                return;
+            }
+            const ownerRepo = {
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo
+            };
+            const prNumber = github.context.issue.number;
+            // https://github.com/actions/toolkit/tree/main/packages/github
+            const githubToken = core.getInput('githubToken');
+            const octokit = github.getOctokit(githubToken);
+            const pr = yield octokit.pulls.get(Object.assign(Object.assign({}, ownerRepo), { pull_number: prNumber }));
+            const binderComment = `[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}) ${commentText} ${pr.data.head.sha}`;
+            // TODO: Handle pagination if >100 comments
+            const comments = yield octokit.issues.listComments(Object.assign(Object.assign({}, ownerRepo), { issue_number: prNumber }));
+            const githubActionsComments = comments.data.filter(issue => issue.user.login === 'github-actions[bot]' &&
+                issue.body.match(commentText));
+            if (githubActionsComments.length) {
+                const comment = githubActionsComments[githubActionsComments.length - 1];
+                core.debug(`Updating comment ${comment.html_url}: ${binderComment}`);
+                octokit.issues.updateComment(Object.assign(Object.assign({}, ownerRepo), { comment_id: comment.id, body: `${comment.body}\n\n${binderComment}` }));
+            }
+            else {
+                core.debug(`Creating comment on ${pr.data.html_url}: ${binderComment}`);
+                octokit.issues.createComment(Object.assign(Object.assign({}, ownerRepo), { issue_number: prNumber, body: `${binderComment}\n\n${commentUpdate}` }));
+            }
+            core.setOutput('binderComment', binderComment);
         }
         catch (error) {
             core.setFailed(error.message);
@@ -58,37 +81,6 @@ function run() {
     });
 }
 run();
-
-
-/***/ }),
-
-/***/ 817:
-/***/ (function(__unused_webpack_module, exports) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.wait = void 0;
-function wait(milliseconds) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise(resolve => {
-            if (isNaN(milliseconds)) {
-                throw new Error('milliseconds not a number');
-            }
-            setTimeout(() => resolve('done!'), milliseconds);
-        });
-    });
-}
-exports.wait = wait;
 
 
 /***/ }),
