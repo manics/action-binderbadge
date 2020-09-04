@@ -1,16 +1,32 @@
+import {addBinderComment} from './binder'
 import * as core from '@actions/core'
-import {wait} from './wait'
+import * as github from '@actions/github'
+
+// Set secret `ACTIONS_RUNNER_DEBUG=true` `ACTIONS_STEP_DEBUG=true` to enable debug comments
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
+    const payload = JSON.stringify(github.context.payload, undefined, 2)
+    core.debug(`Event payload: ${payload}`)
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    if (github.context.eventName !== 'pull_request') {
+      core.setFailed(`Event not supported: ${github.context.eventName}`)
+      return
+    }
 
-    core.setOutput('time', new Date().toTimeString())
+    const prNumber = github.context.issue.number
+    const githubToken = core.getInput('githubToken')
+    const binderUrl = core.getInput('binderUrl')
+
+    const binderComment = addBinderComment(
+      binderUrl,
+      githubToken,
+      github.context.repo.owner,
+      github.context.repo.repo,
+      prNumber
+    )
+
+    core.setOutput('binderComment', binderComment)
   } catch (error) {
     core.setFailed(error.message)
   }

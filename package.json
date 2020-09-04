@@ -25,7 +25,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.2.5"
+    "@actions/core": "^1.2.5",
+    "@actions/github": "^4.0.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.13",
@@ -38,6 +39,7 @@
     "jest": "^24.9.0",
     "jest-circus": "^26.4.2",
     "js-yaml": "^3.14.0",
+    "nock": "^13.0.4",
     "prettier": "2.1.1",
     "ts-jest": "^24.3.0",
     "typescript": "^4.0.2"

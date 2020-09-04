@@ -2,12 +2,9 @@ name: 'build-test'
 on: # rebuild any PRs and main branch changes
   pull_request:
   push:
-    branches:
-      - main
-      - 'releases/*'
 
 jobs:
-  build: # make sure build/ci work properly
+  build: # make sure build/ci work properly, and that dist was updated
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -15,10 +12,8 @@ jobs:
           npm install
       - run: |
           npm run all
-  test: # make sure the action works on a clean machine without building
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./
-        with:
-          milliseconds: 1000
+      - run: |
+          git diff --exit-code
+          if [ -n "$(git status --porcelain)" ]; then
+            exit 1
+          fi
