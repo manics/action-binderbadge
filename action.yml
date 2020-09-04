@@ -1,10 +1,14 @@
-name: mybinder-badge-commenter
-description: Add a mybinder link comment on PRs
+name: binderhub-badge-commenter
+description: Add a BinderHub link comment on PRs
 author: Simon Li
 inputs:
   githubToken:
     required: true
     description: GitHub token
+  binderUrl:
+    required: true
+    description: BinderHub base URL if not using mybinder.org
+    default: https://mybinder.org
 runs:
   using: 'node12'
   main: 'dist/index.js'

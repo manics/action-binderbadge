@@ -16,8 +16,10 @@ async function run(): Promise<void> {
 
     const prNumber = github.context.issue.number
     const githubToken = core.getInput('githubToken')
+    const binderUrl = core.getInput('binderUrl')
 
     const binderComment = addBinderComment(
+      binderUrl,
       githubToken,
       github.context.repo.owner,
       github.context.repo.repo,

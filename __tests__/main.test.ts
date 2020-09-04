@@ -38,7 +38,13 @@ test('add new comment', async () => {
     .post('/repos/owner/repo/issues/2/comments', {body: fullComment1})
     .reply(200)
 
-  const c = await addBinderComment('token', 'owner', 'repo', 2)
+  const c = await addBinderComment(
+    'https://mybinder.org',
+    'token',
+    'owner',
+    'repo',
+    2
+  )
   console.log(c)
   expect(c).toBe(binderComment1)
 })
@@ -80,7 +86,13 @@ test('update existing comment', async () => {
     .patch('/repos/owner/repo/issues/comments/56', {body: fullComment2})
     .reply(200)
 
-  const c = await addBinderComment('token', 'owner', 'repo', 2)
+  const c = await addBinderComment(
+    'https://mybinder.org',
+    'token',
+    'owner',
+    'repo',
+    2
+  )
   console.log(c)
   expect(c).toBe(binderComment2)
 })
