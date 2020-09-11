@@ -6,6 +6,7 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
+    "clean": "rimraf lib dist",
     "format": "prettier --write **/*.ts",
     "format-check": "prettier --check **/*.ts",
     "lint": "eslint src/**/*.ts",
@@ -41,6 +42,7 @@
     "js-yaml": "^3.14.0",
     "nock": "^13.0.4",
     "prettier": "2.1.1",
+    "rimraf": "^3.0.2",
     "ts-jest": "^24.3.0",
     "typescript": "^4.0.2"
   }
