@@ -41,7 +41,7 @@ const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 const commentText = ':point_left: Launch a binder notebook on this branch for commit';
 const commentUpdate = 'I will automatically update this comment whenever this PR is modified';
-function addBinderComment(binderUrl, token, owner, repo, prNumber, query) {
+function addBinderComment({ binderUrl, token, owner, repo, prNumber, query }) {
     return __awaiter(this, void 0, void 0, function* () {
         const ownerRepo = {
             owner,
@@ -124,7 +124,14 @@ function run() {
             const githubToken = core.getInput('githubToken');
             const query = core.getInput('query');
             const binderUrl = core.getInput('binderUrl');
-            const binderComment = binder_1.addBinderComment(binderUrl, githubToken, github.context.repo.owner, github.context.repo.repo, prNumber, query);
+            const binderComment = binder_1.addBinderComment({
+                binderUrl,
+                token: githubToken,
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                prNumber,
+                query
+            });
             core.setOutput('binderComment', binderComment);
         }
         catch (error) {

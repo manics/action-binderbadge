@@ -12,13 +12,21 @@ afterEach(() => {
   }
 })
 
+const mockParams = {
+  binderUrl: 'https://mybinder.org',
+  token: 'token',
+  owner: 'owner',
+  repo: 'repo',
+  query: null
+}
+
 const binderComment1 =
   '[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/owner/repo/abcdef1) :point_left: Launch a binder notebook on this branch for commit abcdef1'
 const fullComment1 = `${binderComment1}\n\nI will automatically update this comment whenever this PR is modified`
 
 test('add new comment', async () => {
   nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/2')
+    .get('/repos/owner/repo/pulls/1')
     .reply(200, {
       head: {
         repo: {
@@ -28,7 +36,7 @@ test('add new comment', async () => {
       }
     })
   nock('https://api.github.com')
-    .get('/repos/owner/repo/issues/2/comments')
+    .get('/repos/owner/repo/issues/1/comments')
     .reply(200, [
       {
         id: 12,
@@ -46,17 +54,13 @@ test('add new comment', async () => {
       }
     ])
   nock('https://api.github.com')
-    .post('/repos/owner/repo/issues/2/comments', {body: fullComment1})
+    .post('/repos/owner/repo/issues/1/comments', {body: fullComment1})
     .reply(200)
 
-  const c = await addBinderComment(
-    'https://mybinder.org',
-    'token',
-    'owner',
-    'repo',
-    2,
-    null
-  )
+  const c = await addBinderComment({
+    ...mockParams,
+    prNumber: 1
+  })
   expect(c).toBe(binderComment1)
 })
 
@@ -97,14 +101,10 @@ test('update existing comment', async () => {
     .patch('/repos/owner/repo/issues/comments/56', {body: fullComment2})
     .reply(200)
 
-  const c = await addBinderComment(
-    'https://mybinder.org',
-    'token',
-    'owner',
-    'repo',
-    2,
-    null
-  )
+  const c = await addBinderComment({
+    ...mockParams,
+    prNumber: 2
+  })
   expect(c).toBe(binderComment2)
 })
 
@@ -127,7 +127,7 @@ test('add new lab comment', async () => {
     .get('/repos/owner/repo/issues/3/comments')
     .reply(200, [
       {
-        id: 9,
+        id: 90,
         user: {
           login: 'someone-else'
         },
@@ -138,13 +138,10 @@ test('add new lab comment', async () => {
     .post('/repos/owner/repo/issues/3/comments', {body: fullLabComment})
     .reply(200)
 
-  const c = await addBinderComment(
-    'https://mybinder.org',
-    'token',
-    'owner',
-    'repo',
-    3,
-    'urlpath=lab'
-  )
+  const c = await addBinderComment({
+    ...mockParams,
+    prNumber: 3,
+    query: 'urlpath=lab'
+  })
   expect(c).toBe(binderLabComment)
 })

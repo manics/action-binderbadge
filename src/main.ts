@@ -19,14 +19,14 @@ async function run(): Promise<void> {
     const query = core.getInput('query')
     const binderUrl = core.getInput('binderUrl')
 
-    const binderComment = addBinderComment(
+    const binderComment = addBinderComment({
       binderUrl,
-      githubToken,
-      github.context.repo.owner,
-      github.context.repo.repo,
+      token: githubToken,
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
       prNumber,
       query
-    )
+    })
 
     core.setOutput('binderComment', binderComment)
   } catch (error) {

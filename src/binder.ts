@@ -6,14 +6,23 @@ const commentText =
 const commentUpdate =
   'I will automatically update this comment whenever this PR is modified'
 
-export async function addBinderComment(
-  binderUrl: string,
-  token: string,
-  owner: string,
-  repo: string,
-  prNumber: number,
+interface BinderCommentParameters {
+  binderUrl: string
+  token: string
+  owner: string
+  repo: string
+  prNumber: number
   query: string | null
-): Promise<string> {
+}
+
+export async function addBinderComment({
+  binderUrl,
+  token,
+  owner,
+  repo,
+  prNumber,
+  query
+}: BinderCommentParameters): Promise<string> {
   const ownerRepo = {
     owner,
     repo
