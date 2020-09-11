@@ -6,13 +6,23 @@ const commentText =
 const commentUpdate =
   'I will automatically update this comment whenever this PR is modified'
 
-export async function addBinderComment(
-  binderUrl: string,
-  token: string,
-  owner: string,
-  repo: string,
+interface BinderCommentParameters {
+  binderUrl: string
+  token: string
+  owner: string
+  repo: string
   prNumber: number
-): Promise<string> {
+  query: string | null
+}
+
+export async function addBinderComment({
+  binderUrl,
+  token,
+  owner,
+  repo,
+  prNumber,
+  query
+}: BinderCommentParameters): Promise<string> {
   const ownerRepo = {
     owner,
     repo
@@ -26,7 +36,8 @@ export async function addBinderComment(
     pull_number: prNumber
   })
 
-  const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}) ${commentText} ${pr.data.head.sha}`
+  const suffix = query ? `?${query}` : ''
+  const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}${suffix}) ${commentText} ${pr.data.head.sha}`
 
   // TODO: Handle pagination if >100 comments
   const comments = await octokit.issues.listComments({

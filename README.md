@@ -15,6 +15,7 @@ If the action has already commented on a PR and further changes are made the com
 
 - `binderUrl`: Optionally specify an alternative BinderHub instead of mybinder.org.
 The URL `<binderUrl>/badge_logo.svg` must exist, and will be used as the badge for linking.
+- `query`: Optional query string to pass to the launched server, for example use `urlpath=lab` to launch JupyterLab.
 
 
 ## Example

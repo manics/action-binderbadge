@@ -41,7 +41,7 @@ const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 const commentText = ':point_left: Launch a binder notebook on this branch for commit';
 const commentUpdate = 'I will automatically update this comment whenever this PR is modified';
-function addBinderComment(binderUrl, token, owner, repo, prNumber) {
+function addBinderComment({ binderUrl, token, owner, repo, prNumber, query }) {
     return __awaiter(this, void 0, void 0, function* () {
         const ownerRepo = {
             owner,
@@ -50,7 +50,8 @@ function addBinderComment(binderUrl, token, owner, repo, prNumber) {
         // https://github.com/actions/toolkit/tree/main/packages/github
         const octokit = github.getOctokit(token);
         const pr = yield octokit.pulls.get(Object.assign(Object.assign({}, ownerRepo), { pull_number: prNumber }));
-        const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}) ${commentText} ${pr.data.head.sha}`;
+        const suffix = query ? `?${query}` : '';
+        const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}${suffix}) ${commentText} ${pr.data.head.sha}`;
         // TODO: Handle pagination if >100 comments
         const comments = yield octokit.issues.listComments(Object.assign(Object.assign({}, ownerRepo), { issue_number: prNumber }));
         const githubActionsComments = comments.data.filter(issue => issue.user.login === 'github-actions[bot]' &&
@@ -121,8 +122,16 @@ function run() {
             }
             const prNumber = github.context.issue.number;
             const githubToken = core.getInput('githubToken');
+            const query = core.getInput('query');
             const binderUrl = core.getInput('binderUrl');
-            const binderComment = binder_1.addBinderComment(binderUrl, githubToken, github.context.repo.owner, github.context.repo.repo, prNumber);
+            const binderComment = binder_1.addBinderComment({
+                binderUrl,
+                token: githubToken,
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                prNumber,
+                query
+            });
             core.setOutput('binderComment', binderComment);
         }
         catch (error) {
