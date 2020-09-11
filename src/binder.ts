@@ -11,7 +11,8 @@ export async function addBinderComment(
   token: string,
   owner: string,
   repo: string,
-  prNumber: number
+  prNumber: number,
+  query: string | null
 ): Promise<string> {
   const ownerRepo = {
     owner,
@@ -26,7 +27,8 @@ export async function addBinderComment(
     pull_number: prNumber
   })
 
-  const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}) ${commentText} ${pr.data.head.sha}`
+  const suffix = query ? `?${query}` : ''
+  const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}${suffix}) ${commentText} ${pr.data.head.sha}`
 
   // TODO: Handle pagination if >100 comments
   const comments = await octokit.issues.listComments({

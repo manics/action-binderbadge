@@ -16,6 +16,7 @@ async function run(): Promise<void> {
 
     const prNumber = github.context.issue.number
     const githubToken = core.getInput('githubToken')
+    const query = core.getInput('query')
     const binderUrl = core.getInput('binderUrl')
 
     const binderComment = addBinderComment(
@@ -23,7 +24,8 @@ async function run(): Promise<void> {
       githubToken,
       github.context.repo.owner,
       github.context.repo.repo,
-      prNumber
+      prNumber,
+      query
     )
 
     core.setOutput('binderComment', binderComment)

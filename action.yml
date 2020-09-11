@@ -5,6 +5,9 @@ inputs:
   githubToken:
     required: true
     description: GitHub token
+  query:
+    required: false
+    description: Optional query string to pass to the launched server, for example `urlpath=lab`
   binderUrl:
     required: true
     description: BinderHub base URL if not using mybinder.org
