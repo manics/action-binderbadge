@@ -1,0 +1,24 @@
+name: test-and-update
+on:
+  push:
+    branches-ignore:
+      - main
+    tags-ignore:
+      - "*"
+
+jobs:
+  test-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Runs format, updates dist, runs tests
+      - run: |
+          npm install
+          npm run all
+          git diff
+      - uses: stefanzweifel/git-auto-commit-action@v4.7.2
+        with:
+          commit_message: "[update-dist-bot] auto-format and update dist"
+          commit_user_name: update-dist-bot
+          commit_user_email: update-dist-bot@example.org
+          commit_author: "update-dist-bot <update-dist-bot@example.org>"
