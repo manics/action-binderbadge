@@ -7,7 +7,7 @@ on:
     # All other branches are handled in test-and-update which auto-formats,
     # updates dist, runs tests, and pushes the changes back to the branch
     tags:
-      - "*"
+      - '*'
 
 jobs:
   build: # make sure build/ci work properly, and that dist was updated

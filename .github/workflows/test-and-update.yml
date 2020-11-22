@@ -4,7 +4,7 @@ on:
     branches-ignore:
       - main
     tags-ignore:
-      - "*"
+      - '*'
 
 jobs:
   test-and-update:
@@ -18,7 +18,7 @@ jobs:
           git diff
       - uses: stefanzweifel/git-auto-commit-action@bbd291750d2526367d915d5197485331dc2d8dc7
         with:
-          commit_message: "[update-dist-bot] auto-format and update dist"
+          commit_message: '[update-dist-bot] auto-format and update dist'
           commit_user_name: update-dist-bot
           commit_user_email: update-dist-bot@example.org
-          commit_author: "update-dist-bot <update-dist-bot@example.org>"
+          commit_author: 'update-dist-bot <update-dist-bot@example.org>'
