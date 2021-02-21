@@ -46,8 +46,8 @@ export async function addBinderComment({
   })
   const githubActionsComments = comments.data.filter(
     issue =>
-      issue.user.login === 'github-actions[bot]' &&
-      issue.body.match(commentText)
+      issue.user?.login === 'github-actions[bot]' &&
+      issue.body?.match(commentText)
   )
 
   if (githubActionsComments.length) {
