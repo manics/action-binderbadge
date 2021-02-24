@@ -56,7 +56,8 @@ function addBinderComment({ binderUrl, token, owner, repo, prNumber, query }) {
         const comments = yield octokit.issues.listComments(Object.assign(Object.assign({}, ownerRepo), { issue_number: prNumber }));
         const githubActionsComments = comments.data.filter(issue => {
             var _a, _b;
-            return ((_a = issue.user) === null || _a === void 0 ? void 0 : _a.login) === 'github-actions[bot]' && ((_b = issue.body) === null || _b === void 0 ? void 0 : _b.match(commentText));
+            return ((_a = issue.user) === null || _a === void 0 ? void 0 : _a.login) === 'github-actions[bot]' &&
+                ((_b = issue.body) === null || _b === void 0 ? void 0 : _b.match(commentText));
         });
         if (githubActionsComments.length) {
             const comment = githubActionsComments[githubActionsComments.length - 1];
