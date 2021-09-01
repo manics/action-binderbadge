@@ -31,16 +31,19 @@ export async function addBinderComment({
   // https://github.com/actions/toolkit/tree/main/packages/github
   const octokit = github.getOctokit(token)
 
-  const pr = await octokit.pulls.get({
+  const pr = await octokit.rest.pulls.get({
     ...ownerRepo,
     pull_number: prNumber
   })
 
+  if (!pr.data.head.repo) {
+    throw new Error('Could not get repo')
+  }
   const suffix = query ? `?${query}` : ''
   const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}${suffix}) ${commentText} ${pr.data.head.sha}`
 
   // TODO: Handle pagination if >100 comments
-  const comments = await octokit.issues.listComments({
+  const comments = await octokit.rest.issues.listComments({
     ...ownerRepo,
     issue_number: prNumber
   })
@@ -53,14 +56,14 @@ export async function addBinderComment({
   if (githubActionsComments.length) {
     const comment = githubActionsComments[githubActionsComments.length - 1]
     core.debug(`Updating comment ${comment.html_url}: ${binderComment}`)
-    await octokit.issues.updateComment({
+    await octokit.rest.issues.updateComment({
       ...ownerRepo,
       comment_id: comment.id,
       body: `${comment.body}\n\n${binderComment}`
     })
   } else {
     core.debug(`Creating comment on ${pr.data.html_url}: ${binderComment}`)
-    await octokit.issues.createComment({
+    await octokit.rest.issues.createComment({
       ...ownerRepo,
       issue_number: prNumber,
       body: `${binderComment}\n\n${commentUpdate}`
