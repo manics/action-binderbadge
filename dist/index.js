@@ -109,9 +109,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const binder_1 = __nccwpck_require__(245);
 const core = __importStar(__nccwpck_require__(186));
 const github = __importStar(__nccwpck_require__(438));
+const binder_1 = __nccwpck_require__(245);
 // Set secret `ACTIONS_RUNNER_DEBUG=true` `ACTIONS_STEP_DEBUG=true` to enable debug comments
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
