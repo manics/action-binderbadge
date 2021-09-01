@@ -1,6 +1,6 @@
-import {addBinderComment} from './binder'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import {addBinderComment} from './binder'
 
 // Set secret `ACTIONS_RUNNER_DEBUG=true` `ACTIONS_STEP_DEBUG=true` to enable debug comments
 
