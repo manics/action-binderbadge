@@ -29,8 +29,13 @@ async function run(): Promise<void> {
     })
 
     core.setOutput('binderComment', binderComment)
+    // https://devblogs.microsoft.com/typescript/announcing-typescript-4-4/#use-unknown-catch-variables
   } catch (error) {
-    core.setFailed(error.message)
+    if (error instanceof Error) {
+      core.setFailed(error.message)
+    } else {
+      core.setFailed(String(error))
+    }
   }
 }
 

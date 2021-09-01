@@ -126,7 +126,7 @@ function run() {
             const githubToken = core.getInput('githubToken');
             const query = core.getInput('query');
             const binderUrl = core.getInput('binderUrl');
-            const binderComment = binder_1.addBinderComment({
+            const binderComment = (0, binder_1.addBinderComment)({
                 binderUrl,
                 token: githubToken,
                 owner: github.context.repo.owner,
@@ -135,9 +135,15 @@ function run() {
                 query
             });
             core.setOutput('binderComment', binderComment);
+            // https://devblogs.microsoft.com/typescript/announcing-typescript-4-4/#use-unknown-catch-variables
         }
         catch (error) {
-            core.setFailed(error.message);
+            if (error instanceof Error) {
+                core.setFailed(error.message);
+            }
+            else {
+                core.setFailed(String(error));
+            }
         }
     });
 }
