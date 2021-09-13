@@ -16,7 +16,7 @@ jobs:
           npm install
           npm run all
           git diff
-      - uses: stefanzweifel/git-auto-commit-action@5dd17c3b53a58c1cb5eaab903826abe94765ccd6
+      - uses: stefanzweifel/git-auto-commit-action@abd87b7d94702070bef78dc1d56b6928b8fa9ecc
         with:
           commit_message: '[update-dist-bot] auto-format and update dist'
           commit_user_name: update-dist-bot
