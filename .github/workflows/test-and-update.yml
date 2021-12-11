@@ -9,8 +9,15 @@ on:
 jobs:
   test-and-update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          # Ensure this matches .github/workflows/test.yml and .gitpod.Dockerfile
+          node-version: '16'
+          # cache: npm
       # Runs format, updates dist, runs tests
       - run: |
           npm install
