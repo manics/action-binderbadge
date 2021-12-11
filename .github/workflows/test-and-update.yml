@@ -17,7 +17,7 @@ jobs:
         with:
           # Ensure this matches .github/workflows/test.yml and .gitpod.Dockerfile
           node-version: '16'
-          cache: npm
+          # cache: npm
       # Runs format, updates dist, runs tests
       - run: |
           npm install
