@@ -12,17 +12,46 @@ afterEach(() => {
   }
 })
 
-const mockPrData = {
-  data: {
+// Check no other requests are made
+nock.emitter.on('no match', (req: any) => {
+  throw new Error(
+    `Unexpected request ${req.method} ${req.path}: ${JSON.stringify(
+      req.options
+    )}`
+  )
+})
+
+function mockPrResponse(
+  owner: string,
+  repo: string,
+  sha: string,
+  prNumber: number
+) {
+  return {
     head: {
       repo: {
-        full_name: 'test-owner/test-repo',
-        html_url: 'https://github.com/test-owner/test-repo'
+        full_name: `${owner}/${repo}`,
+        html_url: `https://github.com/${owner}/${repo}`
       },
-      sha: 'test-sha'
+      sha: sha
     },
-    html_url: 'https://github.com/test-owner/test-repo/pull/N'
+    html_url: `https://github.com/${owner}/${repo}/pull/${prNumber}`
   }
+}
+
+function mockCommentResponse(commentId: number, login: string, body: string) {
+  return {
+    id: commentId,
+    user: {
+      login: login
+    },
+    body: body,
+    html_url: `https://github.com/<example>/<example>/issues/0#issuecomment-${commentId}`
+  }
+}
+
+const mockPrData = {
+  data: mockPrResponse('test-owner', 'test-repo', 'test-sha', 0)
 }
 
 test('binderEnvironmentUrl default', () => {
@@ -88,32 +117,12 @@ const fullComment1 = `${binderComment1}\n\nI will automatically update this comm
 test('add new comment', async () => {
   nock('https://api.github.com')
     .get('/repos/owner/repo/pulls/1')
-    .reply(200, {
-      head: {
-        repo: {
-          full_name: 'owner/repo'
-        },
-        sha: 'abcdef1'
-      },
-      html_url: 'https://github.com/owner/repo/pull/1'
-    })
+    .reply(200, mockPrResponse('owner', 'repo', 'abcdef1', 1))
   nock('https://api.github.com')
     .get('/repos/owner/repo/issues/1/comments')
     .reply(200, [
-      {
-        id: 12,
-        user: {
-          login: 'github-actions[bot]'
-        },
-        body: 'something else'
-      },
-      {
-        id: 34,
-        user: {
-          login: 'someone-else'
-        },
-        body: 'something else'
-      }
+      mockCommentResponse(12, 'github-actions[bot]', 'something else'),
+      mockCommentResponse(34, 'someone-else', 'something else')
     ])
   nock('https://api.github.com')
     .post('/repos/owner/repo/issues/1/comments', {body: fullComment1})
@@ -133,32 +142,12 @@ const fullComment2 = `${fullComment1}\n\n${binderComment2}`
 test('update existing comment', async () => {
   nock('https://api.github.com')
     .get('/repos/owner/repo/pulls/2')
-    .reply(200, {
-      head: {
-        repo: {
-          full_name: 'owner/repo'
-        },
-        sha: '9876543'
-      },
-      html_url: 'https://github.com/owner/repo/pull/2'
-    })
+    .reply(200, mockPrResponse('owner', 'repo', '9876543', 2))
   nock('https://api.github.com')
     .get('/repos/owner/repo/issues/2/comments')
     .reply(200, [
-      {
-        id: 56,
-        user: {
-          login: 'github-actions[bot]'
-        },
-        body: fullComment1
-      },
-      {
-        id: 78,
-        user: {
-          login: 'someone-else'
-        },
-        body: 'something else'
-      }
+      mockCommentResponse(56, 'github-actions[bot]', fullComment1),
+      mockCommentResponse(78, 'someone-else', 'something else')
     ])
   nock('https://api.github.com')
     .patch('/repos/owner/repo/issues/comments/56', {body: fullComment2})
@@ -178,27 +167,10 @@ test('add new lab comment using query', async () => {
 
   nock('https://api.github.com')
     .get('/repos/owner/repo/pulls/3')
-    .reply(200, {
-      head: {
-        repo: {
-          full_name: 'owner/repo'
-        },
-        sha: 'a1b2c3d'
-      }
-      ,
-      html_url: 'https://github.com/owner/repo/pull/3'
-    })
+    .reply(200, mockPrResponse('owner', 'repo', 'a1b2c3d', 3))
   nock('https://api.github.com')
     .get('/repos/owner/repo/issues/3/comments')
-    .reply(200, [
-      {
-        id: 90,
-        user: {
-          login: 'someone-else'
-        },
-        body: 'something else'
-      }
-    ])
+    .reply(200, [mockCommentResponse(90, 'someone-else', 'something else')])
   nock('https://api.github.com')
     .post('/repos/owner/repo/issues/3/comments', {body: fullLabComment})
     .reply(200)
@@ -218,26 +190,10 @@ test('add new lab comment using urlpath', async () => {
 
   nock('https://api.github.com')
     .get('/repos/owner/repo/pulls/4')
-    .reply(200, {
-      head: {
-        repo: {
-          full_name: 'owner/repo'
-        },
-        sha: 'a1b2c3d'
-      },
-      html_url: 'https://github.com/owner/repo/pull/4'
-    })
+    .reply(200, mockPrResponse('owner', 'repo', 'a1b2c3d', 4))
   nock('https://api.github.com')
     .get('/repos/owner/repo/issues/4/comments')
-    .reply(200, [
-      {
-        id: 91,
-        user: {
-          login: 'someone-else'
-        },
-        body: 'something else'
-      }
-    ])
+    .reply(200, [mockCommentResponse(91, 'someone-else', 'something else')])
   nock('https://api.github.com')
     .post('/repos/owner/repo/issues/4/comments', {body: fullLabComment})
     .reply(200)
@@ -258,27 +214,10 @@ test('add new lab comment with pullyMcPullface', async () => {
 
   nock('https://api.github.com')
     .get('/repos/owner/repo/pulls/5')
-    .reply(200, {
-      head: {
-        repo: {
-          full_name: 'owner/repo',
-          html_url: 'https://github.com/owner/repo'
-        },
-        sha: 'a1b2c3d'
-      },
-      html_url: 'https://github.com/owner/repo/pull/5'
-    })
+    .reply(200, mockPrResponse('owner', 'repo', 'a1b2c3d', 5))
   nock('https://api.github.com')
     .get('/repos/owner/repo/issues/5/comments')
-    .reply(200, [
-      {
-        id: 101,
-        user: {
-          login: 'someone-else'
-        },
-        body: 'something else'
-      }
-    ])
+    .reply(200, [mockCommentResponse(101, 'someone-else', 'something else')])
   nock('https://api.github.com')
     .post('/repos/owner/repo/issues/5/comments', {body: fullLabComment})
     .reply(200)
