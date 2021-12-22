@@ -18,6 +18,8 @@ async function run(): Promise<void> {
     const githubToken = core.getInput('githubToken')
     const query = core.getInput('query')
     const binderUrl = core.getInput('binderUrl')
+    const environmentRepo = core.getInput('environmentRepo')
+    const urlpath = core.getInput('urlpath')
 
     const binderComment = addBinderComment({
       binderUrl,
@@ -25,7 +27,9 @@ async function run(): Promise<void> {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       prNumber,
-      query
+      query,
+      environmentRepo,
+      urlpath
     })
 
     core.setOutput('binderComment', binderComment)

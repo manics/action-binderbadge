@@ -7,11 +7,17 @@ inputs:
     description: GitHub token
   query:
     required: false
-    description: Optional query string to pass to the launched server, for example `urlpath=lab`
+    description: Optional query string to pass to the launched server, for example `urlpath=lab`, will be used exactly as is (no escaping)
   binderUrl:
     required: true
     description: BinderHub base URL if not using mybinder.org
     default: https://mybinder.org
+  environmentRepo:
+    required: false
+    description: If set then the current repository is used to supply the content for nbgitpuller, and the environment is built using `environmentRepo`. Must be in the form `<repo-type>/<repo>/<version>`, e.g. `gh/binder-examples/conda/HEAD`
+  urlpath:
+    required: false
+    description: Optional URL path to pass to the launched server, for example `lab/tree/example.ipynb` or `rstudio`
 runs:
   using: 'node12'
   main: 'dist/index.js'
