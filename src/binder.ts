@@ -7,6 +7,8 @@ import * as github from '@actions/github'
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 type PrResponseT = any
 
+type Octokit = ReturnType<typeof github.getOctokit>
+
 const commentText =
   ':point_left: Launch a binder notebook on this branch for commit'
 const commentUpdate =
@@ -21,6 +23,7 @@ interface BinderCommentParameters {
   query: string | null
   environmentRepo: string | null
   urlpath: string | null
+  updateDescription: string | boolean | null
 }
 
 function binderEnvironmentUrl(
@@ -84,7 +87,8 @@ export async function addBinderComment({
   prNumber,
   query,
   environmentRepo,
-  urlpath
+  urlpath,
+  updateDescription
 }: BinderCommentParameters): Promise<string> {
   const ownerRepo = {
     owner,
@@ -106,6 +110,24 @@ export async function addBinderComment({
   const suffix = binderQuery(environmentRepo, pr, urlpath, query)
   const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderRepoUrl}${suffix}) ${commentText} ${pr.data.head.sha}`
 
+  if (
+    updateDescription &&
+    (updateDescription === true || updateDescription.toLowerCase() === 'true')
+  ) {
+    await updatePrDescription(octokit, ownerRepo, prNumber, binderComment, pr)
+  } else {
+    await addOrUpdateComment(octokit, ownerRepo, prNumber, binderComment, pr)
+  }
+  return binderComment
+}
+
+async function addOrUpdateComment(
+  octokit: Octokit,
+  ownerRepo: {owner: string; repo: string},
+  prNumber: number,
+  binderComment: string,
+  pr: PrResponseT
+): Promise<void> {
   // TODO: Handle pagination if >100 comments
   const comments = await octokit.rest.issues.listComments({
     ...ownerRepo,
@@ -133,8 +155,21 @@ export async function addBinderComment({
       body: `${binderComment}\n\n${commentUpdate}`
     })
   }
+}
 
-  return binderComment
+async function updatePrDescription(
+  octokit: Octokit,
+  ownerRepo: {owner: string; repo: string},
+  prNumber: number,
+  binderComment: string,
+  pr: PrResponseT
+): Promise<void> {
+  core.debug(`Updating PR description ${pr.data.html_url}: ${binderComment}`)
+  await octokit.rest.pulls.update({
+    ...ownerRepo,
+    pull_number: prNumber,
+    body: `${pr.data.body}\n\n${binderComment}`
+  })
 }
 
 export const __private = {

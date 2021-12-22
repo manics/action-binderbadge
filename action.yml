@@ -18,6 +18,9 @@ inputs:
   urlpath:
     required: false
     description: Optional URL path to pass to the launched server, for example `lab/tree/example.ipynb` or `rstudio`
+  updateDescription:
+    required: false
+    description: If `true` then append the comment to the description instead of in a new comment
 runs:
   using: 'node12'
   main: 'dist/index.js'

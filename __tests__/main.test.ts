@@ -25,7 +25,8 @@ function mockPrResponse(
   owner: string,
   repo: string,
   sha: string,
-  prNumber: number
+  prNumber: number,
+  body: string = 'PR description'
 ) {
   return {
     head: {
@@ -35,7 +36,8 @@ function mockPrResponse(
       },
       sha: sha
     },
-    html_url: `https://github.com/${owner}/${repo}/pull/${prNumber}`
+    html_url: `https://github.com/${owner}/${repo}/pull/${prNumber}`,
+    body: body
   }
 }
 
@@ -107,12 +109,17 @@ const mockParams = {
   repo: 'repo',
   query: null,
   environmentRepo: null,
-  urlpath: null
+  urlpath: null,
+  updateDescription: false
 }
 
 const binderComment1 =
   '[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/owner/repo/abcdef1) :point_left: Launch a binder notebook on this branch for commit abcdef1'
 const fullComment1 = `${binderComment1}\n\nI will automatically update this comment whenever this PR is modified`
+
+const binderComment2 =
+  '[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/owner/repo/9876543) :point_left: Launch a binder notebook on this branch for commit 9876543'
+const fullComment2 = `${fullComment1}\n\n${binderComment2}`
 
 test('add new comment', async () => {
   nock('https://api.github.com')
@@ -134,10 +141,6 @@ test('add new comment', async () => {
   })
   expect(c).toBe(binderComment1)
 })
-
-const binderComment2 =
-  '[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/owner/repo/9876543) :point_left: Launch a binder notebook on this branch for commit 9876543'
-const fullComment2 = `${fullComment1}\n\n${binderComment2}`
 
 test('update existing comment', async () => {
   nock('https://api.github.com')
@@ -229,4 +232,48 @@ test('add new lab comment with pullyMcPullface', async () => {
     urlpath: 'lab'
   })
   expect(c).toBe(binderLabComment)
+})
+
+test('add to pr description', async () => {
+  const initialDescription = '# PR\n\ndescription'
+  nock('https://api.github.com')
+    .get('/repos/owner/repo/pulls/6')
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', 'abcdef1', 6, initialDescription)
+    )
+  nock('https://api.github.com')
+    .patch('/repos/owner/repo/pulls/6', {
+      body: `${initialDescription}\n\n${binderComment1}`
+    })
+    .reply(200)
+
+  const c = await addBinderComment({
+    ...mockParams,
+    prNumber: 6,
+    updateDescription: true
+  })
+  expect(c).toBe(binderComment1)
+})
+
+test('add another to pr description', async () => {
+  const initialDescription = `# PR\n\ndescription\n\n${binderComment1}`
+  nock('https://api.github.com')
+    .get('/repos/owner/repo/pulls/7')
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', '9876543', 7, initialDescription)
+    )
+  nock('https://api.github.com')
+    .patch('/repos/owner/repo/pulls/7', {
+      body: `${initialDescription}\n\n${binderComment2}`
+    })
+    .reply(200)
+
+  const c = await addBinderComment({
+    ...mockParams,
+    prNumber: 7,
+    updateDescription: true
+  })
+  expect(c).toBe(binderComment2)
 })
