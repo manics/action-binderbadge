@@ -35,12 +35,72 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addBinderComment = void 0;
+exports.__private = exports.addBinderComment = exports.parseBoolean = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const commentText = ':point_left: Launch a binder notebook on this branch for commit';
+const commentText = ':point_left: Launch a binder notebook on this branch';
 const commentUpdate = 'I will automatically update this comment whenever this PR is modified';
-function addBinderComment({ binderUrl, token, owner, repo, prNumber, query }) {
+function parseBoolean(input, defaultValue) {
+    if (typeof input === 'boolean') {
+        return input;
+    }
+    if (input === null || input === undefined || input === '') {
+        return defaultValue;
+    }
+    if (input.toLowerCase() === 'true') {
+        return true;
+    }
+    if (input.toLowerCase() === 'false') {
+        return false;
+    }
+    throw new Error(`Invalid boolean value: ${input}`);
+}
+exports.parseBoolean = parseBoolean;
+function binderEnvironmentUrl(binderUrl, environmentRepo, pr, persistentLink) {
+    if (environmentRepo) {
+        return `${binderUrl}/v2/${environmentRepo}`;
+    }
+    else {
+        if (!pr.data.head.repo) {
+            throw new Error('Could not get repo');
+        }
+        const version = persistentLink ? pr.data.head.sha : pr.data.head.ref;
+        return `${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${version}`;
+    }
+}
+function binderQuery(environmentRepo, pr, urlpath, query, persistentLink) {
+    if (!pr.data.head.repo) {
+        throw new Error('Could not get repo');
+    }
+    const version = persistentLink ? pr.data.head.sha : pr.data.head.ref;
+    const params = new URLSearchParams();
+    if (environmentRepo) {
+        const gitpull = new URLSearchParams();
+        gitpull.append('repo', pr.data.head.repo.html_url);
+        gitpull.append('branch', version);
+        if (urlpath) {
+            gitpull.append('urlpath', urlpath);
+        }
+        params.append('urlpath', `git-pull?${gitpull}`);
+    }
+    else {
+        if (urlpath) {
+            params.append('urlpath', urlpath);
+        }
+    }
+    const queryString = params.toString();
+    if (queryString) {
+        if (query) {
+            return `?${queryString}&${query}`;
+        }
+        return `?${queryString}`;
+    }
+    if (query) {
+        return `?${query}`;
+    }
+    return '';
+}
+function addBinderComment({ binderUrl, token, owner, repo, prNumber, query, environmentRepo, urlpath, updateDescription, persistentLink }) {
     return __awaiter(this, void 0, void 0, function* () {
         const ownerRepo = {
             owner,
@@ -52,8 +112,30 @@ function addBinderComment({ binderUrl, token, owner, repo, prNumber, query }) {
         if (!pr.data.head.repo) {
             throw new Error('Could not get repo');
         }
-        const suffix = query ? `?${query}` : '';
-        const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderUrl}/v2/gh/${pr.data.head.repo.full_name}/${pr.data.head.sha}${suffix}) ${commentText} ${pr.data.head.sha}`;
+        const useSha = persistentLink;
+        const binderRepoUrl = binderEnvironmentUrl(binderUrl, environmentRepo, pr, useSha);
+        const suffix = binderQuery(environmentRepo, pr, urlpath, query, useSha);
+        const version = persistentLink
+            ? `for commit ${pr.data.head.sha}`
+            : pr.data.head.ref;
+        const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderRepoUrl}${suffix}) ${commentText} ${version}`;
+        let updated;
+        if (updateDescription) {
+            updated = yield updatePrDescription(octokit, ownerRepo, prNumber, binderComment, pr);
+        }
+        else {
+            updated = yield addOrUpdateComment(octokit, ownerRepo, prNumber, binderComment, pr);
+        }
+        if (updated) {
+            return binderComment;
+        }
+        return null;
+    });
+}
+exports.addBinderComment = addBinderComment;
+function addOrUpdateComment(octokit, ownerRepo, prNumber, binderComment, pr) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
         // TODO: Handle pagination if >100 comments
         const comments = yield octokit.rest.issues.listComments(Object.assign(Object.assign({}, ownerRepo), { issue_number: prNumber }));
         const githubActionsComments = comments.data.filter(issue => {
@@ -63,17 +145,36 @@ function addBinderComment({ binderUrl, token, owner, repo, prNumber, query }) {
         });
         if (githubActionsComments.length) {
             const comment = githubActionsComments[githubActionsComments.length - 1];
+            if ((_a = comment.body) === null || _a === void 0 ? void 0 : _a.includes(binderComment)) {
+                core.debug(`Not updating comment ${comment.html_url}, already contains ${binderComment}`);
+                return false;
+            }
             core.debug(`Updating comment ${comment.html_url}: ${binderComment}`);
             yield octokit.rest.issues.updateComment(Object.assign(Object.assign({}, ownerRepo), { comment_id: comment.id, body: `${comment.body}\n\n${binderComment}` }));
+            return true;
         }
         else {
             core.debug(`Creating comment on ${pr.data.html_url}: ${binderComment}`);
             yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, ownerRepo), { issue_number: prNumber, body: `${binderComment}\n\n${commentUpdate}` }));
+            return true;
         }
-        return binderComment;
     });
 }
-exports.addBinderComment = addBinderComment;
+function updatePrDescription(octokit, ownerRepo, prNumber, binderComment, pr) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (pr.data.body.includes(binderComment)) {
+            core.debug(`Not updating PR description ${pr.data.html_url}, already contains ${binderComment}`);
+            return false;
+        }
+        core.debug(`Updating PR description ${pr.data.html_url}: ${binderComment}`);
+        yield octokit.rest.pulls.update(Object.assign(Object.assign({}, ownerRepo), { pull_number: prNumber, body: `${pr.data.body}\n\n${binderComment}` }));
+        return true;
+    });
+}
+exports.__private = {
+    binderEnvironmentUrl,
+    binderQuery
+};
 
 
 /***/ }),
@@ -112,6 +213,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.__private = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const binder_1 = __nccwpck_require__(5245);
@@ -129,13 +231,28 @@ function run() {
             const githubToken = core.getInput('githubToken');
             const query = core.getInput('query');
             const binderUrl = core.getInput('binderUrl');
+            const environmentRepo = core.getInput('environmentRepo');
+            const urlpath = core.getInput('urlpath');
+            const updateDescription = (0, binder_1.parseBoolean)(core.getInput('updateDescription'), false);
+            const persistentLink = (0, binder_1.parseBoolean)(core.getInput('persistentLink'), true);
+            core.debug(`prNumber: ${prNumber}`);
+            core.debug(`query: ${query}`);
+            core.debug(`binderUrl: ${binderUrl}`);
+            core.debug(`environmentRepo: ${environmentRepo}`);
+            core.debug(`urlpath: ${urlpath}`);
+            core.debug(`updateDescription: ${updateDescription}`);
+            core.debug(`persistentLink: ${persistentLink}`);
             const binderComment = (0, binder_1.addBinderComment)({
                 binderUrl,
                 token: githubToken,
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
                 prNumber,
-                query
+                query,
+                environmentRepo,
+                urlpath,
+                updateDescription,
+                persistentLink
             });
             core.setOutput('binderComment', binderComment);
             // https://devblogs.microsoft.com/typescript/announcing-typescript-4-4/#use-unknown-catch-variables
@@ -151,6 +268,9 @@ function run() {
     });
 }
 run();
+exports.__private = {
+    parseBoolean: binder_1.parseBoolean
+};
 
 
 /***/ }),
