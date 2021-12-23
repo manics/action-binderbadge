@@ -13,6 +13,25 @@ const commentText = ':point_left: Launch a binder notebook on this branch'
 const commentUpdate =
   'I will automatically update this comment whenever this PR is modified'
 
+export function parseBoolean(
+  input: string | boolean | null | undefined,
+  defaultValue: boolean
+): boolean {
+  if (typeof input === 'boolean') {
+    return input
+  }
+  if (input === null || input === undefined || input === '') {
+    return defaultValue
+  }
+  if (input.toLowerCase() === 'true') {
+    return true
+  }
+  if (input.toLowerCase() === 'false') {
+    return false
+  }
+  throw new Error(`Invalid boolean value: ${input}`)
+}
+
 interface BinderCommentParameters {
   binderUrl: string
   token: string
@@ -22,16 +41,8 @@ interface BinderCommentParameters {
   query: string | null
   environmentRepo: string | null
   urlpath: string | null
-  updateDescription: string | boolean | null
-  persistentLink: string | boolean | null
-}
-
-function inputIsTrue(input: string | boolean | null): boolean {
-  return (
-    !!input &&
-    (input === true ||
-      (typeof input === 'string' && input.toLowerCase() === 'true'))
-  )
+  updateDescription: boolean
+  persistentLink: boolean
 }
 
 function binderEnvironmentUrl(
@@ -119,7 +130,7 @@ export async function addBinderComment({
   if (!pr.data.head.repo) {
     throw new Error('Could not get repo')
   }
-  const useSha = inputIsTrue(persistentLink)
+  const useSha = persistentLink
   const binderRepoUrl = binderEnvironmentUrl(
     binderUrl,
     environmentRepo,
@@ -133,7 +144,7 @@ export async function addBinderComment({
   const binderComment = `[![Binder](${binderUrl}/badge_logo.svg)](${binderRepoUrl}${suffix}) ${commentText} ${version}`
 
   let updated
-  if (inputIsTrue(updateDescription)) {
+  if (updateDescription) {
     updated = await updatePrDescription(
       octokit,
       ownerRepo,

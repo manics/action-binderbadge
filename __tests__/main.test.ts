@@ -1,4 +1,4 @@
-import {addBinderComment, __private} from '../src/binder'
+import {addBinderComment, parseBoolean, __private} from '../src/binder'
 import nock from 'nock'
 
 beforeEach(() => {
@@ -19,6 +19,21 @@ nock.emitter.on('no match', (req: any) => {
       req.options
     )}`
   )
+})
+
+test('parseBoolean', () => {
+  expect(parseBoolean(true, false)).toBe(true)
+  expect(parseBoolean(false, true)).toBe(false)
+
+  expect(parseBoolean(null, true)).toBe(true)
+  expect(parseBoolean(null, false)).toBe(false)
+
+  expect(parseBoolean('tRuE', false)).toBe(true)
+  expect(parseBoolean('FaLsE', true)).toBe(false)
+  expect(parseBoolean('', false)).toBe(false)
+  expect(parseBoolean('', true)).toBe(true)
+
+  expect(() => parseBoolean('other', false)).toThrow(Error)
 })
 
 function mockPrResponse(

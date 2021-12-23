@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {addBinderComment} from './binder'
+import {addBinderComment, parseBoolean} from './binder'
 
 // Set secret `ACTIONS_RUNNER_DEBUG=true` `ACTIONS_STEP_DEBUG=true` to enable debug comments
 
@@ -20,8 +20,19 @@ async function run(): Promise<void> {
     const binderUrl = core.getInput('binderUrl')
     const environmentRepo = core.getInput('environmentRepo')
     const urlpath = core.getInput('urlpath')
-    const updateDescription = core.getInput('updateDescription')
-    const persistentLink = core.getInput('persistentLink')
+    const updateDescription = parseBoolean(
+      core.getInput('updateDescription'),
+      false
+    )
+    const persistentLink = parseBoolean(core.getInput('persistentLink'), true)
+
+    core.debug(`prNumber: ${prNumber}`)
+    core.debug(`query: ${query}`)
+    core.debug(`binderUrl: ${binderUrl}`)
+    core.debug(`environmentRepo: ${environmentRepo}`)
+    core.debug(`urlpath: ${urlpath}`)
+    core.debug(`updateDescription: ${updateDescription}`)
+    core.debug(`persistentLink: ${persistentLink}`)
 
     const binderComment = addBinderComment({
       binderUrl,
@@ -48,3 +59,7 @@ async function run(): Promise<void> {
 }
 
 run()
+
+export const __private = {
+  parseBoolean
+}
