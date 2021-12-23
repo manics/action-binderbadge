@@ -21,6 +21,7 @@ async function run(): Promise<void> {
     const environmentRepo = core.getInput('environmentRepo')
     const urlpath = core.getInput('urlpath')
     const updateDescription = core.getInput('updateDescription')
+    const persistentLink = core.getInput('persistentLink')
 
     const binderComment = addBinderComment({
       binderUrl,
@@ -31,7 +32,8 @@ async function run(): Promise<void> {
       query,
       environmentRepo,
       urlpath,
-      updateDescription
+      updateDescription,
+      persistentLink
     })
 
     core.setOutput('binderComment', binderComment)
