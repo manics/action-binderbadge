@@ -1,7 +1,7 @@
 # BinderHub badge GitHub Action
 
 [![build-test](https://github.com/manics/action-binderbadge/workflows/build-test/badge.svg)](https://github.com/manics/action-binderbadge/actions)
-[![Open in Gitpod](https://img.shields.io/badge/Gitpod-open-908a85?logo=gitpod)](https://gitpod.io/#https://gitpod.io/#https://github.com/manics/action-binderbadge)
+[![Open in Gitpod](https://img.shields.io/badge/Gitpod-open-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/manics/action-binderbadge)
 
 Automatically comment on GitHub pull requests with a link to launch the PR on https://mybinder.org or some other [Binderhub](https://github.com/jupyterhub/binderhub).
 
