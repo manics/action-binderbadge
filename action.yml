@@ -27,3 +27,7 @@ inputs:
 runs:
   using: 'node12'
   main: 'dist/index.js'
+
+branding:
+  icon: share-2
+  color: blue
