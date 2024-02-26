@@ -25,7 +25,7 @@ inputs:
     required: false
     description: If `true` then the commit SHA will be used and the comment will be updated on subsequent runs, otherwise the branch name will be used
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
 
 branding:
