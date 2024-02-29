@@ -218,7 +218,7 @@ async function updatePrDescription(
   binderComment: string,
   pr: PrResponseT
 ): Promise<boolean> {
-  if (pr.data.body.includes(binderComment)) {
+  if (pr.data.body?.includes(binderComment)) {
     core.debug(
       `Not updating PR description ${pr.data.html_url}, already contains ${binderComment}`
     )

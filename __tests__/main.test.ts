@@ -1,24 +1,19 @@
 import {addBinderComment, parseBoolean, __private} from '../src/binder'
-import nock from 'nock'
+import {MockAgent, MockClient, setGlobalDispatcher} from 'undici'
+
+let mockAgent: MockAgent<MockAgent.Options>
+let mockClient: MockClient
 
 beforeEach(() => {
-  nock.disableNetConnect()
+  mockAgent = new MockAgent({connections: 1})
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+  mockClient = mockAgent.get('https://api.github.com')
 })
 
 afterEach(() => {
-  if (!nock.isDone()) {
-    nock.cleanAll()
-    throw new Error('Not all nock calls were made')
-  }
-})
-
-// Check no other requests are made
-nock.emitter.on('no match', (req: any) => {
-  throw new Error(
-    `Unexpected request ${req.method} ${req.path}: ${JSON.stringify(
-      req.options
-    )}`
-  )
+  mockAgent.assertNoPendingInterceptors()
+  mockAgent.close()
 })
 
 test('parseBoolean', () => {
@@ -181,18 +176,34 @@ const fullComment2 = `${fullComment1}\n\n${binderComment2}`
 const binderCommentBranch =
   '[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/owner/repo/ref-branch) :point_left: Launch a binder notebook on this branch ref-branch'
 
+const defaultReplyHeaders = {
+  headers: {'Content-Type': 'application/json; charset=utf-8'}
+}
+
 test('add new comment', async () => {
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/1')
-    .reply(200, mockPrResponse('owner', 'repo', 'abcdef1', 'branch', 1))
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/issues/1/comments')
-    .reply(200, [
-      mockCommentResponse(12, 'github-actions[bot]', 'something else'),
-      mockCommentResponse(34, 'someone-else', 'something else')
-    ])
-  nock('https://api.github.com')
-    .post('/repos/owner/repo/issues/1/comments', {body: fullComment1})
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/1'})
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', 'abcdef1', 'branch', 1),
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({path: '/repos/owner/repo/issues/1/comments'})
+    .reply(
+      200,
+      [
+        mockCommentResponse(12, 'github-actions[bot]', 'something else'),
+        mockCommentResponse(34, 'someone-else', 'something else')
+      ],
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({
+      method: 'POST',
+      path: '/repos/owner/repo/issues/1/comments',
+      body: JSON.stringify({body: fullComment1})
+    })
     .reply(200)
 
   const c = await addBinderComment({
@@ -203,17 +214,29 @@ test('add new comment', async () => {
 })
 
 test('update existing comment', async () => {
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/2')
-    .reply(200, mockPrResponse('owner', 'repo', '9876543', 'branch', 2))
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/issues/2/comments')
-    .reply(200, [
-      mockCommentResponse(56, 'github-actions[bot]', fullComment1),
-      mockCommentResponse(78, 'someone-else', 'something else')
-    ])
-  nock('https://api.github.com')
-    .patch('/repos/owner/repo/issues/comments/56', {body: fullComment2})
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/2'})
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', '9876543', 'branch', 2),
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({path: '/repos/owner/repo/issues/2/comments'})
+    .reply(
+      200,
+      [
+        mockCommentResponse(56, 'github-actions[bot]', fullComment1),
+        mockCommentResponse(78, 'someone-else', 'something else')
+      ],
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({
+      method: 'PATCH',
+      path: '/repos/owner/repo/issues/comments/56',
+      body: JSON.stringify({body: fullComment2})
+    })
     .reply(200)
 
   const c = await addBinderComment({
@@ -228,14 +251,26 @@ test('add new lab comment using query', async () => {
     '[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/owner/repo/a1b2c3d?urlpath=lab) :point_left: Launch a binder notebook on this branch for commit a1b2c3d'
   const fullLabComment = `${binderLabComment}\n\nI will automatically update this comment whenever this PR is modified`
 
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/3')
-    .reply(200, mockPrResponse('owner', 'repo', 'a1b2c3d', 'branch', 3))
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/issues/3/comments')
-    .reply(200, [mockCommentResponse(90, 'someone-else', 'something else')])
-  nock('https://api.github.com')
-    .post('/repos/owner/repo/issues/3/comments', {body: fullLabComment})
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/3'})
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', 'a1b2c3d', 'branch', 3),
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({path: '/repos/owner/repo/issues/3/comments'})
+    .reply(
+      200,
+      [mockCommentResponse(90, 'someone-else', 'something else')],
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({
+      method: 'POST',
+      path: '/repos/owner/repo/issues/3/comments',
+      body: JSON.stringify({body: fullLabComment})
+    })
     .reply(200)
 
   const c = await addBinderComment({
@@ -251,14 +286,26 @@ test('add new lab comment using urlpath', async () => {
     '[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/owner/repo/a1b2c3d?urlpath=lab) :point_left: Launch a binder notebook on this branch for commit a1b2c3d'
   const fullLabComment = `${binderLabComment}\n\nI will automatically update this comment whenever this PR is modified`
 
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/4')
-    .reply(200, mockPrResponse('owner', 'repo', 'a1b2c3d', 'branch', 4))
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/issues/4/comments')
-    .reply(200, [mockCommentResponse(91, 'someone-else', 'something else')])
-  nock('https://api.github.com')
-    .post('/repos/owner/repo/issues/4/comments', {body: fullLabComment})
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/4'})
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', 'a1b2c3d', 'branch', 4),
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({path: '/repos/owner/repo/issues/4/comments'})
+    .reply(
+      200,
+      [mockCommentResponse(91, 'someone-else', 'something else')],
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({
+      method: 'POST',
+      path: '/repos/owner/repo/issues/4/comments',
+      body: JSON.stringify({body: fullLabComment})
+    })
     .reply(200)
 
   const c = await addBinderComment({
@@ -275,14 +322,26 @@ test('add new lab comment with pullyMcPullface using branch', async () => {
   const binderLabComment = `[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/envowner/envrepo/branch${binderPullQuery}) :point_left: Launch a binder notebook on this branch ref-branch`
   const fullLabComment = `${binderLabComment}\n\nI will automatically update this comment whenever this PR is modified`
 
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/5')
-    .reply(200, mockPrResponse('owner', 'repo', 'a1b2c3d', 'ref-branch', 5))
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/issues/5/comments')
-    .reply(200, [mockCommentResponse(101, 'someone-else', 'something else')])
-  nock('https://api.github.com')
-    .post('/repos/owner/repo/issues/5/comments', {body: fullLabComment})
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/5'})
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', 'a1b2c3d', 'ref-branch', 5),
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({path: '/repos/owner/repo/issues/5/comments'})
+    .reply(
+      200,
+      [mockCommentResponse(101, 'someone-else', 'something else')],
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({
+      method: 'POST',
+      path: '/repos/owner/repo/issues/5/comments',
+      body: JSON.stringify({body: fullLabComment})
+    })
     .reply(200)
 
   const c = await addBinderComment({
@@ -296,21 +355,28 @@ test('add new lab comment with pullyMcPullface using branch', async () => {
 })
 
 test('avoid duplicating existing comment', async () => {
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/6')
-    .reply(200, mockPrResponse('owner', 'repo', 'abcdef1', 'branch', 6))
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/issues/6/comments')
-    .reply(200, [
-      mockCommentResponse(
-        102,
-        'github-actions[bot]',
-        `Prefix\n${fullComment1}\nSuffix`
-      )
-    ])
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/6'})
+    .reply(
+      200,
+      mockPrResponse('owner', 'repo', 'abcdef1', 'branch', 6),
+      defaultReplyHeaders
+    )
+  mockClient
+    .intercept({path: '/repos/owner/repo/issues/6/comments'})
+    .reply(
+      200,
+      [
+        mockCommentResponse(
+          102,
+          'github-actions[bot]',
+          `Prefix\n${fullComment1}\nSuffix`
+        )
+      ],
+      defaultReplyHeaders
+    )
   // PATCH https://api.github.com/repos/owner/repo/issues/comments/102
-  // should not be called, if it is it will be caught by the earlier
-  // nock.emitter.on('no match') handler
+  // should not be called, if it is it should be caught
 
   const c = await addBinderComment({
     ...mockParams,
@@ -321,8 +387,8 @@ test('avoid duplicating existing comment', async () => {
 
 test('add to pr description', async () => {
   const initialDescription = '# PR\n\ndescription'
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/7')
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/7'})
     .reply(
       200,
       mockPrResponse(
@@ -332,11 +398,14 @@ test('add to pr description', async () => {
         'branch',
         6,
         initialDescription
-      )
+      ),
+      defaultReplyHeaders
     )
-  nock('https://api.github.com')
-    .patch('/repos/owner/repo/pulls/7', {
-      body: `${initialDescription}\n\n${binderComment1}`
+  mockClient
+    .intercept({
+      path: '/repos/owner/repo/pulls/7',
+      method: 'PATCH',
+      body: JSON.stringify({body: `${initialDescription}\n\n${binderComment1}`})
     })
     .reply(200)
 
@@ -350,8 +419,8 @@ test('add to pr description', async () => {
 
 test('add another to pr description', async () => {
   const initialDescription = `# PR\n\ndescription\n\n${binderComment1}`
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/8')
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/8'})
     .reply(
       200,
       mockPrResponse(
@@ -361,11 +430,16 @@ test('add another to pr description', async () => {
         'branch',
         7,
         initialDescription
-      )
+      ),
+      defaultReplyHeaders
     )
-  nock('https://api.github.com')
-    .patch('/repos/owner/repo/pulls/8', {
-      body: `${initialDescription}\n\n${binderComment2}`
+  mockClient
+    .intercept({
+      path: '/repos/owner/repo/pulls/8',
+      method: 'PATCH',
+      body: JSON.stringify({
+        body: `${initialDescription}\n\n${binderComment2}`
+      })
     })
     .reply(200)
 
@@ -379,8 +453,8 @@ test('add another to pr description', async () => {
 
 test('avoid duplicating pr description using branch', async () => {
   const initialDescription = `# PR\n\ndescription\n${binderCommentBranch}`
-  nock('https://api.github.com')
-    .get('/repos/owner/repo/pulls/9')
+  mockClient
+    .intercept({path: '/repos/owner/repo/pulls/9'})
     .reply(
       200,
       mockPrResponse(
@@ -390,11 +464,11 @@ test('avoid duplicating pr description using branch', async () => {
         'ref-branch',
         9,
         initialDescription
-      )
+      ),
+      defaultReplyHeaders
     )
   // PATCH https://api.github.com/repos/owner/repo/pulls/9
-  // should not be called, if it is it will be caught by the earlier
-  // nock.emitter.on('no match') handler
+  // should not be called, if it is it should be caught
 
   const c = await addBinderComment({
     ...mockParams,

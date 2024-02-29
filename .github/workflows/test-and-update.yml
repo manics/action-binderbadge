@@ -8,22 +8,22 @@ on:
 
 jobs:
   test-and-update:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           # Ensure this matches .github/workflows/test.yml and .gitpod.Dockerfile
-          node-version: '16'
-          # cache: npm
+          node-version: '20'
+          cache: npm
       # Runs format, updates dist, runs tests
       - run: |
           npm install
           npm run all
           git diff
-      - uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a
+      - uses: stefanzweifel/git-auto-commit-action@8756aa072ef5b4a080af5dc8fef36c5d586e521d
         with:
           commit_message: '[update-dist-bot] auto-format and update dist'
           commit_user_name: update-dist-bot

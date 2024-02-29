@@ -87,7 +87,7 @@ Compile Typescript, run the formatter and linter:
 $ npm run build && npm run format && npm run lint
 ```
 
-Package the code for distribution (uses [ncc](https://github.com/zeit/ncc)):
+Package the code for distribution (uses [ncc](https://github.com/vercel/ncc)):
 
 ```bash
 $ npm run package
@@ -99,7 +99,7 @@ Run the tests :heavy_check_mark:
 $ npm test
 ```
 
-The tests use [nock](https://github.com/nock/nock) to mock GitHub API responses, no real requests are made so manual testing is still required.
+The tests use [undici.MockClient](https://undici.nodejs.org/#/docs/api/MockClient) to mock GitHub API responses, no real requests are made so manual testing is still required.
 
 Shortcut:
 
