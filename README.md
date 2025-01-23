@@ -2,6 +2,7 @@
 
 [![build-test](https://github.com/manics/action-binderbadge/workflows/build-test/badge.svg)](https://github.com/manics/action-binderbadge/actions)
 [![Open in Gitpod](https://img.shields.io/badge/Gitpod-open-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/manics/action-binderbadge)
+[![Open in Codeanywhere](https://img.shields.io/badge/Open%20in-Codeanywhere-blue?style=flat-square&logo=codeanywhere)](https://app.codeanywhere.com/#https://github.com/manics/action-binderbadge)
 
 Automatically comment on GitHub pull requests with a link to launch the PR on https://mybinder.org or some other [Binderhub](https://github.com/jupyterhub/binderhub).
 
