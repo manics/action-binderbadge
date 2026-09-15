@@ -1,4 +1,5 @@
-import {addBinderComment, parseBoolean, __private} from '../src/binder'
+import {afterEach, beforeEach, expect, test} from '@jest/globals'
+import {addBinderComment, parseBoolean, __private} from '../src/binder.js'
 import {MockAgent, MockClient, setGlobalDispatcher} from 'undici'
 
 let mockAgent: MockAgent<MockAgent.Options>
