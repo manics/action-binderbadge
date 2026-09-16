@@ -25,8 +25,9 @@ inputs:
     required: false
     description: If `true` then the commit SHA will be used and the comment will be updated on subsequent runs, otherwise the branch name will be used
 runs:
-  using: 'node20'
-  main: 'dist/index.js'
+  # https://docs.github.com/en/actions/reference/workflows-and-actions/metadata-syntax#runsusing-for-javascript-actions
+  using: node24
+  main: dist/index.js
 
 branding:
   icon: share-2
