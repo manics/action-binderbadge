@@ -38,8 +38,6 @@ jobs:
   badge:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      issues: write
       pull-requests: write
     steps:
       - uses: manics/action-binderbadge@main
@@ -59,8 +57,6 @@ jobs:
   badge:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      issues: write
       pull-requests: write
     steps:
       - uses: manics/action-binderbadge@main
