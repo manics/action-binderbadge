@@ -1,13 +1,26 @@
 version: 2
 updates:
-  # Enable version updates for npm
-  - package-ecosystem: 'npm'
-    # Look for `package.json` and `lock` files in the `root` directory
-    directory: '/'
-    # Check the npm registry for updates every day (weekdays)
+  - package-ecosystem: npm
+    directory: /
+    groups:
+      # one big pull request for minor bumps
+      npm-minor:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
     schedule:
-      interval: 'daily'
+      interval: monthly
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      actions:
+        patterns:
+          - '*'
+    cooldown:
+      default-days: 7
